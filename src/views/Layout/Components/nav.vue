@@ -1,11 +1,12 @@
 <!--左侧导航菜单-->
 <template>
   <div id="nav-wrap">
+    <h1 class="logo">
+      <img src="../../../assets/images/logo.png" alt />
+    </h1>
     <el-menu
       default-active="1-4-1"
       class="el-menu-vertical-demo"
-      @open="handleOpen"
-      @close="handleClose"
       :collapse="isCollapse"
       background-color="transparent"
       text-color="#fff"
@@ -14,7 +15,7 @@
     >
       <template v-for="(item,index) in routers">
         <el-submenu v-if="!item.hidden" :key="item.id" :index="index+''">
-          <!--一级菜单-->   
+          <!--一级菜单-->
           <template slot="title">
             <svg-icon :iconClass="item.meta.icon" :className="item.meta.icon"></svg-icon>
             <span slot="title">{{item.meta.name}}</span>
@@ -27,37 +28,34 @@
           >{{subItem.meta.name}}</el-menu-item>
         </el-submenu>
       </template>
-      
     </el-menu>
   </div>
 </template>
 <script>
-import { reactive, ref, onMounted } from "@vue/composition-api";
+import { reactive, ref, onMounted, computed } from "@vue/composition-api";
 export default {
   name: "navMenu",
   setup(prop, context) {
     //定义基础数据
-    const isCollapse = ref(false);
     const routers = reactive(context.root.$router.options.routes);
-    console.log(routers);
-    //方法函数
-    const handleOpen = (key, keyPath) => {
-      console.log(key, keyPath);
-    };
-    const handleClose = (key, keyPath) => {
-      console.log(key, keyPath);
-    };
+    const isCollapse = computed(() => context.root.$store.state.app.isCollapse);
     return {
       routers,
-      isCollapse,
-      handleOpen,
-      handleClose
+      isCollapse
     };
   }
 };
 </script>
 <style lang="scss" scoped>
 @import "../../../styles/config.scss";
+.logo {
+  text-align: center;
+  img {
+    margin: 28px auto 25px;
+    width: 92px;
+    @include webkit(transition, all 0.3s ease 0s);
+  }
+}
 #nav-wrap {
   position: fixed;
   width: $navMenu;
@@ -65,9 +63,27 @@ export default {
   left: 0;
   height: 100vh;
   background-color: #344a5f;
-  svg{
+  @include webkit(transition, all 0.3s ease 0s);
+  svg {
     font-size: 15px;
     margin-right: 10px;
+  }
+}
+.open {
+  .logo img {
+    width: 92px;
+  }
+  #nav-wrap {
+    width: $navMenu;
+  }
+}
+.close {
+  .logo img {
+    margin: 0 auto;
+    width: 60%;
+  }
+  #nav-wrap {
+    width: $navMenuMin;
   }
 }
 </style>

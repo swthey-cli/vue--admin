@@ -184,8 +184,8 @@ export default {
       }
       //修改获取验证码按钮状态
       updateButtonStatus({
-        status:true,
-        text:'发送中'
+        status: true,
+        text: "发送中"
       });
       //调用获取验证码接口
       GetSms({
@@ -229,14 +229,16 @@ export default {
       });
     };
     //登录
+
     const login = data => {
-      Login(data)
+      context.root.$store
+        .dispatch("login",data)
         .then(response => {
           context.root.$message.success(response.data.message);
           clearDown();
           //页面跳转
           context.root.$router.push({
-            name:'Console'
+            name: "Console"
           });
         })
         .catch(error => {});
