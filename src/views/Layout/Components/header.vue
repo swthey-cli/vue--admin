@@ -7,9 +7,9 @@
     <div class="pull-right">
       <div class="user-info pull-left">
         <img src="../../../assets/images/face.jpg" alt />
-        管理员
+        {{username}}
       </div>
-      <div class="header-icon pull-left">
+      <div class="header-icon pull-left" @click="exit()">
         <svg-icon iconClass="close" class="close"></svg-icon>
       </div>
     </div>
@@ -17,13 +17,43 @@
 </template>
 <script>
 import { computed } from "@vue/composition-api";
+import { removeToken,removeUserName } from "@/utils/app";
 export default {
   name: "layoutHeader",
   setup(props, context) {
-    const navMenuState = () => context.root.$store.commit("setCollapse");
+    const navMenuState = () => context.root.$store.commit("app/SET_COLLAPSE");
+    const username = computed(() => context.root.$store.state.app.username);
+    // const exit =()=>{
+    //     context.root.$store.dispatch("app/exit").then(()=>{}).catch(()=>{});
+    // }
+    //登出
+    const exit = () => {
+      context.root
+        .$confirm("确定退出吗？", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        })
+        .then(() => {
+          context.root.$message({
+            type: "success",
+            message: "退出成功"
+          });
+          removeToken();
+          removeUserName();
+          context.root.$router.push({
+            name: "login"
+          });
+        })
+        .catch(() => {});
+    };
+    //通过vueX-Action 处理
+    //const navMenuState =()=>context.root.$store.dispatch("toggleMenu");
     return {
-      navMenuState
-    }
+      navMenuState,
+      username,
+      exit
+    };
   }
 };
 </script>
@@ -36,8 +66,8 @@ export default {
   left: $navMenu;
   height: 75px;
   background-color: #fff;
-  @include webkit(box-shadow,0 3px 16px 0 rgba(0, 0, 0, 0.1));
-  @include webkit(transition,all .3s ease 0s);
+  @include webkit(box-shadow, 0 3px 16px 0 rgba(0, 0, 0, 0.1));
+  @include webkit(transition, all 0.3s ease 0s);
   line-height: 75px;
 }
 .header-icon {
@@ -63,10 +93,14 @@ export default {
     margin: 0 18px -12px 0;
   }
 }
-.open{
-  #header-wrap {left: $navMenu;}
+.open {
+  #header-wrap {
+    left: $navMenu;
+  }
 }
-.close{
-  #header-wrap{left:$navMenuMin;}
+.close {
+  #header-wrap {
+    left: $navMenuMin;
+  }
 }
 </style>

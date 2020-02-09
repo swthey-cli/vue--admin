@@ -232,9 +232,10 @@ export default {
 
     const login = data => {
       context.root.$store
-        .dispatch("login",data)
+        .dispatch("app/Login",data)
         .then(response => {
           context.root.$message.success(response.data.message);
+          
           clearDown();
           //页面跳转
           context.root.$router.push({
