@@ -17,12 +17,14 @@
 </template>
 <script>
 import { computed } from "@vue/composition-api";
-import { removeToken,removeUserName } from "@/utils/app";
+import { removeToken, removeUserName } from "@/utils/app";
 export default {
   name: "layoutHeader",
   setup(props, context) {
     const navMenuState = () => context.root.$store.commit("app/SET_COLLAPSE");
     const username = computed(() => context.root.$store.state.app.username);
+    //通过vueX-Action 处理
+    //const navMenuState =()=>context.root.$store.dispatch("toggleMenu");
     // const exit =()=>{
     //     context.root.$store.dispatch("app/exit").then(()=>{}).catch(()=>{});
     // }
@@ -47,8 +49,7 @@ export default {
         })
         .catch(() => {});
     };
-    //通过vueX-Action 处理
-    //const navMenuState =()=>context.root.$store.dispatch("toggleMenu");
+
     return {
       navMenuState,
       username,

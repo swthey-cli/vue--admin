@@ -1,7 +1,7 @@
 //后台框架尺寸
 //菜单宽度
 $navMenu: 250px;
-$navMenuMin:64px;
+$navMenuMin: 64px;
 //主颜色
 $mainCcolor: #f56c6c;
 $layoutHeader: 75px;
@@ -11,4 +11,15 @@ $layoutHeader: 75px;
   -o-#{$type}: $value;
   -ms-#{$type}: $value;
   #{$type}: $value;
+}
+@mixin labelDom($align, $width, $line-height: "normal") {
+  label {
+    float: left;
+    line-height: $line-height + px;
+    width: $width + px;
+    text-align: $align;
+  }
+  .warp-content {
+    margin-left: $width + px;
+  }
 }
