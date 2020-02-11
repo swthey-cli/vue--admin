@@ -65,21 +65,21 @@
     <!--表格数据-->
     <el-table :data="tableData" border style="width: 100%">
       <el-table-column type="selection" width="45"></el-table-column>
-      <el-table-column prop="title" label="标题" width="540"></el-table-column>
+      <el-table-column prop="title" label="标题"></el-table-column>
       <el-table-column prop="category" label="类型" width="100"></el-table-column>
       <el-table-column prop="date" label="日期" width="200"></el-table-column>
       <el-table-column prop="user" label="管理员" width="150"></el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" width="250">
         <template slot-scope="scope">
-          <el-button type="success" size="mini">编辑</el-button>
-          <el-button @click="handleClick(scope.row)" type="danger" size="mini">删除</el-button>
+          <el-button type="success" size="mini" @click="dialog_info=true">编辑</el-button>
+          <el-button @click="delete_item" type="danger" size="mini">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
     <!--底部分页-->
     <el-row>
       <el-col :span="10">
-        <el-button size="medium">批量删除</el-button>
+        <el-button size="medium" @click="deleteAll">批量删除</el-button>
       </el-col>
       <el-col :span="14">
         <el-pagination
@@ -100,11 +100,13 @@
 </template>
 <script>
 import DialogInfo from "./dialog/info";
+import {global} from "../../utils/global";
 import { reactive, ref } from "@vue/composition-api";
 export default {
   name: "infoIndex",
   components: { DialogInfo },
-  setup(props, context) {
+  setup(props, { root }) {
+    const {str ,confirm} = global();
     const dialog_info = ref(false); //新增弹窗标识
     const type_value = ref(""); //类型绑定值
     const date_value = ref(""); //日期绑定值
@@ -165,6 +167,19 @@ export default {
     ]);
     const handleSizeChange = () => {};
     const handleCurrentChange = () => {};
+    //删除事件
+    const delete_item = () => {
+      confirm({ content: "确认删除此信息吗？",fn: delete_confirm});
+    };
+    //批量删除
+    const deleteAll = () => {
+      confirm({ content: "确认删除选中的信息吗？",fn: delete_confirm});
+    };
+    const delete_confirm =()=>{
+       root.$message({ type: 'success', message: '删除成功!' });
+    }
+
+
     return {
       dialog_info,
       type_value,
@@ -175,7 +190,9 @@ export default {
       searchOption,
       tableData,
       handleSizeChange,
-      handleCurrentChange
+      handleCurrentChange,
+      delete_item,
+      deleteAll
     };
   }
 };

@@ -57,21 +57,6 @@ export default {
       close
     };
   }
-
-  // watch: {
-  //   flag: {
-  //     handler(newValue, oldValue) {
-  //       this.dialog_info_flag = newValue;
-  //     }
-  //   }
-  // },
-  // methods: {
-  //   close() {
-  //     this.dialog_info_flag = false;
-  //     this.$emit("update:flag", false);
-  //     // this.$emit("close",false);
-  //   }
-  // }
 };
 </script>
 <style lang="sass" scoped>
