@@ -101,13 +101,15 @@
 <script>
 import DialogInfo from "./dialog/info";
 import { GetCategory } from "@/api/news";
-import { global } from "../../utils/global";
-import { reactive, ref, onMounted } from "@vue/composition-api";
+import { global } from "@/utils/global";
+import { common } from "@/api/common";
+import { reactive, ref, onMounted, watch } from "@vue/composition-api";
 export default {
   name: "infoIndex",
   components: { DialogInfo },
   setup(props, { root }) {
     const { str, confirm } = global();
+    const { getInfoCategory, categoryItem } = common();
     const dialog_info = ref(false); //新增弹窗标识
     const type_value = ref(""); //类型绑定值
     const date_value = ref(""); //日期绑定值
@@ -168,12 +170,18 @@ export default {
     const delete_confirm = () => {
       root.$message({ type: "success", message: "删除成功!" });
     };
+    //挂载完成生命周期函数
     onMounted(() => {
-      GetCategory({})
-        .then(response => {
-          options.category = response.data.data.data;
-        })
-        .catch(error => {});
+      getInfoCategory();
+      content.root.$store.dispatch('common/getInfoCategory').then(response=>{
+        
+      }).catch(error=>{
+
+      });
+    });
+    //监听分类信息数据 赋值
+    watch(()=>categoryItem.item, (value)=>{
+      options.category =value;
     });
 
     return {

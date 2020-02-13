@@ -58,10 +58,12 @@ import {
   DeleteCategory,
   EditCategory
 } from "@/api/news";
-import { reactive, ref, onMounted } from "@vue/composition-api";
+import { reactive, ref, onMounted, watch } from "@vue/composition-api";
+import { common } from "@/api/common";
 export default {
   name: "category",
   setup(props, context) {
+    const { getInfoCategory, categoryItem } = common();
     const submit_button_type = ref("");
     const edit_categoryId = ref("");
     const submit_button_loading = ref(false);
@@ -78,18 +80,14 @@ export default {
     const category = reactive({
       item: []
     });
-    //页面挂载完成 执行
+    //页面挂载完成 执行获取分类信息数据
     onMounted(() => {
-      getCategory();
+      getInfoCategory();
     });
-    //获取分类信息数据
-    const getCategory = () => {
-      GetCategory({})
-        .then(response => {
-          category.item = response.data.data.data;
-        })
-        .catch(error => {});
-    };
+    //监听分类信息数据 赋值
+    watch(()=>categoryItem.item, (value)=>{
+      category.item = value;
+    });
     //点击一级分类按钮
     const addFirst = () => {
       submit_button_type.value = "first_add";
@@ -194,7 +192,6 @@ export default {
       submit_button_disabled,
       category,
       form,
-      getCategory,
       submit,
       addFirst,
       deleteCategory,
