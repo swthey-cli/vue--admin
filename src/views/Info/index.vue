@@ -3,15 +3,15 @@
     <el-row :gutter="16">
       <el-col :span="6">
         <div class="label-wrap category">
-          <label for>类型:</label>
+          <label for>分类:</label>
           <div class="warp-content">
             <el-select v-model="type_value" placeholder="请选择" style="width:100%;">
               <el-option
-                v-for="item in options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              ></el-option>
+                v-for="item in options.category"
+                :key="item.id"
+                :label="item.category_name"
+                :value="item.id"
+              >{{item.category_name}}</el-option>
             </el-select>
           </div>
         </div>
@@ -100,33 +100,23 @@
 </template>
 <script>
 import DialogInfo from "./dialog/info";
-import {global} from "../../utils/global";
-import { reactive, ref } from "@vue/composition-api";
+import { GetCategory } from "@/api/news";
+import { global } from "../../utils/global";
+import { reactive, ref, onMounted } from "@vue/composition-api";
 export default {
   name: "infoIndex",
   components: { DialogInfo },
   setup(props, { root }) {
-    const {str ,confirm} = global();
+    const { str, confirm } = global();
     const dialog_info = ref(false); //新增弹窗标识
     const type_value = ref(""); //类型绑定值
     const date_value = ref(""); //日期绑定值
     const search_key = ref("id"); //关键字绑定值
     const search_keyWords = ref(""); //文本框搜索绑定值
     //类型下拉框数据
-    const options = reactive([
-      {
-        value: 1,
-        label: "国际信息"
-      },
-      {
-        value: 2,
-        label: "国内信息"
-      },
-      {
-        value: 3,
-        label: "行业信息"
-      }
-    ]);
+    const options = reactive({
+      category: []
+    });
     //关键字下拉框数据
     const searchOption = reactive([
       {
@@ -169,16 +159,22 @@ export default {
     const handleCurrentChange = () => {};
     //删除事件
     const delete_item = () => {
-      confirm({ content: "确认删除此信息吗？",fn: delete_confirm});
+      confirm({ content: "确认删除此信息吗？", fn: delete_confirm });
     };
     //批量删除
     const deleteAll = () => {
-      confirm({ content: "确认删除选中的信息吗？",fn: delete_confirm});
+      confirm({ content: "确认删除选中的信息吗？", fn: delete_confirm });
     };
-    const delete_confirm =()=>{
-       root.$message({ type: 'success', message: '删除成功!' });
-    }
-
+    const delete_confirm = () => {
+      root.$message({ type: "success", message: "删除成功!" });
+    };
+    onMounted(() => {
+      GetCategory({})
+        .then(response => {
+          options.category = response.data.data.data;
+        })
+        .catch(error => {});
+    });
 
     return {
       dialog_info,
