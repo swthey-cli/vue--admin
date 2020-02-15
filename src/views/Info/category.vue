@@ -175,7 +175,6 @@ export default {
           });
           let data = category.item.filter(s => s.id == edit_categoryId.value);
           data[0].category_name = response.data.data.data.categoryName;
-          console.log(data[0].category_name);
           submit_button_loading.value = false;
         })
         .catch(error => {

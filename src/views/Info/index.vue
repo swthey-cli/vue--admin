@@ -5,9 +5,9 @@
         <div class="label-wrap category">
           <label for>分类:</label>
           <div class="warp-content">
-            <el-select v-model="type_value" placeholder="请选择" style="width:100%;">
+            <el-select v-model="data.type_value" placeholder="请选择" style="width:100%;">
               <el-option
-                v-for="item in options.category"
+                v-for="item in data.options.category"
                 :key="item.id"
                 :label="item.category_name"
                 :value="item.id"
@@ -21,7 +21,7 @@
           <label for>{{"时间："&nbsp;&nbsp;&nbsp;}}</label>
           <div class="warp-content">
             <el-date-picker
-              v-model="date_value"
+              v-model="data.date_value"
               style="width:100%"
               type="datetimerange"
               align="right"
@@ -36,9 +36,9 @@
         <div class="label-wrap key-words">
           <label for>{{"关键字："&nbsp;&nbsp;&nbsp;}}</label>
           <div class="warp-content">
-            <el-select v-model="search_key" placeholder="请选择" style="width:100%">
+            <el-select v-model="data.search_key" placeholder="请选择" style="width:100%">
               <el-option
-                v-for="item in searchOption"
+                v-for="item in data.searchOption"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value"
@@ -50,29 +50,34 @@
     </el-row>
     <el-row :gutter="20">
       <el-col :span="6">
-        <el-input v-model="search_keyWords" placeholder="请输入内容" style="width:100%"></el-input>
+        <el-input v-model="data.search_keyWords" placeholder="请输入内容" style="width:100%"></el-input>
       </el-col>
       <el-col :span="18">
         <div class="label-wrap btn_button">
           <label for></label>
           <div class="warp-content">
             <el-button type="danger" size="small">查询</el-button>
-            <el-button type="success" size="small" @click="dialog_info=true">新增</el-button>
+            <el-button type="success" size="small" @click="data.dialog_info=true">新增</el-button>
           </div>
         </div>
       </el-col>
     </el-row>
     <!--表格数据-->
-    <el-table :data="tableData" border style="width: 100%">
+    <el-table
+      :data="data.tableData"
+      border
+      @selection-change="handleSelectionChange"
+      style="width: 100%"
+    >
       <el-table-column type="selection" width="45"></el-table-column>
       <el-table-column prop="title" label="标题"></el-table-column>
-      <el-table-column prop="category" label="类型" width="100"></el-table-column>
-      <el-table-column prop="date" label="日期" width="200"></el-table-column>
+      <el-table-column prop="categoryId" label="类型" width="100" :formatter="toCategroy"></el-table-column>
+      <el-table-column prop="createDate" label="日期" width="200" :formatter="toDate"></el-table-column>
       <el-table-column prop="user" label="管理员" width="150"></el-table-column>
       <el-table-column label="操作" width="250">
         <template slot-scope="scope">
-          <el-button type="success" size="mini" @click="dialog_info=true">编辑</el-button>
-          <el-button @click="delete_item" type="danger" size="mini">删除</el-button>
+          <el-button type="success" size="mini" @click="data.dialog_info=true">编辑</el-button>
+          <el-button @click="delete_item(scope.$index,scope.row)" type="danger" size="mini">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -90,113 +95,145 @@
           :page-sizes="[5, 10, 20, 50]"
           :page-size="5"
           layout="total, sizes, prev, pager, next, jumper"
-          :total="400"
+          :total="data.total"
         ></el-pagination>
       </el-col>
     </el-row>
     <!--编辑弹窗-->
-    <DialogInfo :flag.sync="dialog_info"></DialogInfo>
+    <DialogInfo :flag.sync="data.dialog_info" :category="data.options.category"></DialogInfo>
   </div>
 </template>
 <script>
 import DialogInfo from "./dialog/info";
-import { GetCategory } from "@/api/news";
+import { GetCategory, GetNewsList, DeleteInfo } from "@/api/news";
 import { global } from "@/utils/global";
 import { common } from "@/api/common";
+import { formatDate } from "@/utils/common";
 import { reactive, ref, onMounted, watch } from "@vue/composition-api";
 export default {
   name: "infoIndex",
   components: { DialogInfo },
-  setup(props, { root }) {
+  setup(props, { root, refs }) {
     const { str, confirm } = global();
-    const { getInfoCategory, categoryItem } = common();
-    const dialog_info = ref(false); //新增弹窗标识
-    const type_value = ref(""); //类型绑定值
-    const date_value = ref(""); //日期绑定值
-    const search_key = ref("id"); //关键字绑定值
-    const search_keyWords = ref(""); //文本框搜索绑定值
-    //类型下拉框数据
-    const options = reactive({
-      category: []
+    const { getInfoCategory } = common();
+    //基础数据
+    const data = reactive({
+      dialog_info: false, //新增按钮弹窗标识
+      type_value: "", //类型绑定值
+      date_value: "", //日期绑定值
+      search_key: "id", //关键字下拉框绑定值
+      search_keyWords: "", //文本框搜索绑定值
+      delete_id: "", //删除数据主键ID
+      //下拉框绑定数据
+      options: {
+        category: [] //类型下拉框
+      },
+      searchOption: [
+        {
+          value: "id",
+          label: "ID"
+        },
+        {
+          value: "title",
+          label: "标题"
+        }
+      ], //关键字下拉框数据
+      tableData: [], //表格数据
+      total: 0, //总记录数
+      page: {
+        //分页
+        pageNumber: 1, //页脚
+        pageSize: 10 //页码
+      }
     });
-    //关键字下拉框数据
-    const searchOption = reactive([
-      {
-        value: "id",
-        label: "ID"
-      },
-      {
-        value: "title",
-        label: "标题"
+    //页码
+    const handleSizeChange = value => {
+      data.page.pageSize = value;
+      getNewsList();
+    };
+    //页脚
+    const handleCurrentChange = value => {
+      data.page.pageNumber = value;
+      getNewsList();
+    };
+    const toCategroy = row => {
+      let res = data.options.category.filter(s => s.id == row.categoryId)[0];
+      if (res == null) {
+        return "";
       }
-    ]);
-    //表格基础数据
-    const tableData = reactive([
-      {
-        title: "纽约市长白思豪宣布退出总统竞选 特朗普发推回应",
-        category: "国内信息",
-        date: "2019-09-10 19:31:31",
-        user: "管理员"
-      },
-      {
-        title: "纽约市长白思豪宣布退出总统竞选 特朗普发推回应",
-        category: "国内信息",
-        date: "2019-09-10 19:31:31",
-        user: "管理员"
-      },
-      {
-        title: "纽约市长白思豪宣布退出总统竞选 特朗普发推回应",
-        category: "国内信息",
-        date: "2019-09-10 19:31:31",
-        user: "管理员"
-      },
-      {
-        title: "纽约市长白思豪宣布退出总统竞选 特朗普发推回应",
-        category: "国内信息",
-        date: "2019-09-10 19:31:31",
-        user: "管理员"
-      }
-    ]);
-    const handleSizeChange = () => {};
-    const handleCurrentChange = () => {};
-    //删除事件
-    const delete_item = () => {
+      return res.category_name;
+    };
+    const toDate = (row, column, cellValue, index) => {
+      return formatDate(row.createDate);
+    };
+
+    //获取信息列表表格数据
+    const getNewsList = () => {
+      GetNewsList({
+        categoryId: "",
+        startTiem: "",
+        endTime: "",
+        title: "",
+        id: "",
+        pageNumber: data.page.pageNumber,
+        pageSize: data.page.pageSize
+      })
+        .then(response => {
+          data.tableData = response.data.data.data;
+          data.total = response.data.data.total;
+        })
+        .catch(error => {});
+    };
+    //单行删除
+    const delete_item = (index, row) => {
+      data.delete_id = [row.id];
       confirm({ content: "确认删除此信息吗？", fn: delete_confirm });
     };
     //批量删除
     const deleteAll = () => {
+      if (!data.delete_id || data.delete_id.length == 0) {
+        root.$message.error("请选择需要删除的数据");
+        return false;
+      }
       confirm({ content: "确认删除选中的信息吗？", fn: delete_confirm });
     };
     const delete_confirm = () => {
-      root.$message({ type: "success", message: "删除成功!" });
+      //调用删除接口
+      DeleteInfo({ id: data.delete_id })
+        .then(response => {
+          root.$message.success(response.data.message);
+          getNewsList(); //调用获取信息列表接口
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    };
+    //获取选中表格行的ID值
+    const handleSelectionChange = value => {
+      data.delete_id= value.map(item => item.id);
     };
     //挂载完成生命周期函数
     onMounted(() => {
-      getInfoCategory();
-      content.root.$store.dispatch('common/getInfoCategory').then(response=>{
-        
-      }).catch(error=>{
-
-      });
+      //调用获取分类赋值给下拉框
+      root.$store
+        .dispatch("common/getInfoCategory")
+        .then(response => {
+          data.options.category = response.data.data.data;
+        })
+        .catch(error => {});
+      //调用获取信息列表接口
+      getNewsList();
     });
-    //监听分类信息数据 赋值
-    watch(()=>categoryItem.item, (value)=>{
-      options.category =value;
-    });
-
     return {
-      dialog_info,
-      type_value,
-      date_value,
-      search_key,
-      search_keyWords,
-      options,
-      searchOption,
-      tableData,
+      data,
       handleSizeChange,
       handleCurrentChange,
       delete_item,
-      deleteAll
+      deleteAll,
+      getNewsList,
+      toDate,
+      toCategroy,
+      handleSelectionChange
     };
   }
 };
