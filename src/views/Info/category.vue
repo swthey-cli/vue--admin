@@ -12,7 +12,7 @@
                 {{item.category_name}}
                 <div class="button_group">
                   <el-button size="mini" type="danger" round @click="editCategory(item)">编辑</el-button>
-                  <el-button size="mini" type="success" round>添加子级</el-button>
+                  <el-button size="mini" type="success" round @click="addChildCategory(item)">添加子级</el-button>
                   <el-button size="mini" round @click="deleteCategory(item.id)">删除</el-button>
                 </div>
               </h4>
@@ -20,8 +20,13 @@
                 <li v-for="childItem in item.children" :key="childItem.id">
                   {{childItem.category_name}}
                   <div class="button_group">
-                    <el-button size="mini" type="danger" round>编辑</el-button>
-                    <el-button size="mini" round>删除</el-button>
+                    <el-button
+                      size="mini"
+                      type="danger"
+                      round
+                      @click="editChildCategory(item,childItem.id)"
+                    >编辑</el-button>
+                    <el-button size="mini" round @click="deleteCategory(childItem.id)">删除</el-button>
                   </div>
                 </li>
               </ul>
@@ -56,20 +61,21 @@ import {
   AddFistCategory,
   GetCategory,
   DeleteCategory,
-  EditCategory
+  EditCategory,
+  AddChildrenCategory
 } from "@/api/news";
 import { reactive, ref, onMounted, watch } from "@vue/composition-api";
 import { common } from "@/api/common";
 export default {
   name: "category",
   setup(props, context) {
-    const { getInfoCategory, categoryItem } = common();
+    const { getInfoCategory, categoryItem, getAllCategory } = common();
     const submit_button_type = ref("");
     const edit_categoryId = ref("");
+    const edit_childId = ref("");
     const submit_button_loading = ref(false);
     const category_first_input = ref(true);
     const category_children_input = ref(true);
-
     const category_first_disabled = ref(true);
     const category_children_disabled = ref(true);
     const submit_button_disabled = ref(true);
@@ -82,12 +88,18 @@ export default {
     });
     //页面挂载完成 执行获取分类信息数据
     onMounted(() => {
-      getInfoCategory();
+      //获取所有一级分类
+      //getInfoCategory();
+      //获取所有分类
+      getAllCategory();
     });
     //监听分类信息数据 赋值
-    watch(()=>categoryItem.item, (value)=>{
-      category.item = value;
-    });
+    watch(
+      () => categoryItem.item,
+      value => {
+        category.item = value;
+      }
+    );
     //点击一级分类按钮
     const addFirst = () => {
       submit_button_type.value = "first_add";
@@ -106,8 +118,36 @@ export default {
       //将分类ID值 存储到变量
       edit_categoryId.value = item.id;
     };
-    //点击一级分类添加子级按钮
-    //删除分类
+    //点击添加子集分类按钮
+    const addChildCategory = item => {
+      submit_button_type.value = "add_children";
+      form.categoryName = item.category_name;
+      form.secCategoryName = item.secCategoryName;
+      category_first_input.value = true;
+      category_children_input.value = true;
+      category_first_disabled.value = true;
+      category_children_disabled.value = false;
+      submit_button_disabled.value = false;
+      //将分类ID值 存储到变量
+      edit_categoryId.value = item.id;
+    };
+    //点击子集编辑按钮
+    const editChildCategory = (item, childId) => {
+      let data = item.children.filter(s => s.id == childId);
+      console.log(data);
+      form.categoryName = item.category_name;
+      form.secCategoryName = data[0].category_name;
+      category_first_input.value = true;
+      category_children_input.value = true;
+      category_first_disabled.value = true;
+      category_children_disabled.value = false;
+      submit_button_disabled.value = false;
+      //将分类ID值 存储到变量
+      submit_button_type.value = "edit_children";
+      edit_categoryId.value = item.id;
+      edit_childId.value = childId;
+    };
+    //删除一级分类
     const deleteCategory = id => {
       context.root
         .$confirm("确认删除该条分类信息吗?", "提示", {
@@ -122,21 +162,30 @@ export default {
                 message: response.data.message,
                 type: response.data.resCode === 0 ? "success" : "error"
               });
-              let index = category.item.findIndex(s => s.id == id);
-              category.item.splice(index, 1);
+              // let index = category.item.findIndex(s => s.id == id);
+              // category.item.splice(index, 1);
+               getAllCategory();
             })
             .catch(error => {});
         })
         .catch(error => {});
     };
-
     /** 分类提交 */
     const submit = () => {
-      submit_button_type.value === "first_add"
-        ? addFirstSubmit()
-        : editFirstSubmit();
+      console.log(submit_button_type.value);
+      if (submit_button_type.value === "first_add") {
+        addFirstSubmit();
+      }
+      if (
+        submit_button_type.value === "first_edit" ||
+        submit_button_type.value === "edit_children"
+      ) {
+        editFirstSubmit();
+      }
+      if (submit_button_type.value === "add_children") {
+        addChildSubmit();
+      }
     };
-
     //新增一级分类提交
     const addFirstSubmit = () => {
       if (!form.categoryName) {
@@ -165,16 +214,48 @@ export default {
     //编辑一级分类提交
     const editFirstSubmit = () => {
       EditCategory({
-        id: edit_categoryId.value,
-        categoryName: form.categoryName
+        id:
+          submit_button_type.value === "first_edit"
+            ? edit_categoryId.value
+            : edit_childId.value,
+        categoryName:
+          submit_button_type.value === "first_edit"
+            ? form.categoryName
+            : form.secCategoryName
       })
         .then(response => {
           context.root.$message({
             message: response.data.message,
             type: response.data.resCode === 0 ? "success" : "error"
           });
-          let data = category.item.filter(s => s.id == edit_categoryId.value);
-          data[0].category_name = response.data.data.data.categoryName;
+          if (submit_button_type.value === "first_edit") {
+            let data = category.item.filter(s => s.id == edit_categoryId.value);
+            data[0].category_name = response.data.data.data.categoryName;
+          } else {
+            let data = category.item.filter(s => s.id == edit_categoryId.value);
+            let children = data[0].children.filter(
+              t => t.id == edit_childId.value
+            );
+            children[0].category_name = response.data.data.data.categoryName;
+          }
+          submit_button_loading.value = false;
+        })
+        .catch(error => {
+          submit_button_loading.value = false;
+        });
+    };
+    //添加子集分类按钮
+    const addChildSubmit = () => {
+      AddChildrenCategory({
+        parentId: edit_categoryId.value,
+        categoryName: form.secCategoryName
+      })
+        .then(response => {
+          context.root.$message({
+            message: response.data.message,
+            type: response.data.resCode === 0 ? "success" : "error"
+          });
+           getAllCategory();
           submit_button_loading.value = false;
         })
         .catch(error => {
@@ -196,7 +277,10 @@ export default {
       deleteCategory,
       editCategory,
       addFirstSubmit,
-      editFirstSubmit
+      editFirstSubmit,
+      addChildCategory,
+      addChildSubmit,
+      editChildCategory
     };
   }
 };

@@ -50,6 +50,17 @@ export function GetCategory(data){
         data
     })
 }
+
+export function GetAllCategory(data){
+    return service.request({
+        method:"post",
+        url:"/news/getCategoryAll/",
+        data
+    })
+}
+
+
+
 //删除信息分类
 export function DeleteCategory(data){
     return service.request({
@@ -67,7 +78,7 @@ export function EditCategory(data){
     })
 }
 //添加子集分类
-export function AddChildrenCategory(){
+export function AddChildrenCategory(data){
     return service.request({
         method:"post",
         url:"/news/addChildrenCategory/",

@@ -96,7 +96,6 @@ export default {
          data.dialog_info_flag =false;
          //回调父组件的查询方法
          emit("getNewInfoList");
-
       }).catch(error=>{
       });
     };

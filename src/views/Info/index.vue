@@ -76,7 +76,6 @@
       <el-table-column prop="title" label="标题"></el-table-column>
       <el-table-column prop="categoryId" label="类型" width="100" :formatter="toCategroy"></el-table-column>
       <el-table-column prop="createDate" label="日期" width="200" :formatter="toDate"></el-table-column>
-      <el-table-column prop="user" label="管理员" width="150"></el-table-column>
       <el-table-column label="操作" width="250">
         <template slot-scope="scope">
           <el-button type="success" size="mini" @click="edit_item(scope.$index,scope.row)">编辑</el-button>
