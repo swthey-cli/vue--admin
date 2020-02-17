@@ -17,10 +17,10 @@ export function AddNews(data){
     })
 }
 //修改
-export function EditNewsInfo(){
+export function EditNewsInfo(data){
     return service.request({
         method:"post",
-        url:"/news/editInfo",
+        url:"/news/editInfo/",
         data:data
     })
 }

@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    title="新增"
+    title="编辑"
     :visible.sync="data.dialog_info_flag"
     @close="close"
     width="580px"
@@ -9,9 +9,9 @@
   >
     <el-form :model="data.form">
       <el-form-item label="类型:" :label-width="data.formLabelWidth">
-        <el-select v-model="data.default_category" placeholder="请选择" style="width:100%;">
+        <el-select v-model="data.form.category" placeholder="请选择" style="width:100%;">
           <el-option
-            v-for="item in data.form.category"
+            v-for="item in data.categoryOption"
             :key="item.id"
             :label="item.category_name"
             :value="item.id"
@@ -32,10 +32,10 @@
   </el-dialog>
 </template>
 <script>
-import { AddNews,GetNewsList} from "@/api/news";
+import { EditNewsInfo, GetNewsList } from "@/api/news";
 import { reactive, ref, watch } from "@vue/composition-api";
 export default {
-  name: "dialogInfo",
+  name: "eidtInfo",
   props: {
     flag: {
       type: Boolean,
@@ -44,46 +44,61 @@ export default {
     category: {
       type: Array,
       default: () => []
+    },
+    edit_id: {
+      type: String,
+      default: ""
     }
   },
   setup(props, { root, emit }) {
     const data = reactive({
       default_category: "",
+      categoryOption: [], //分类下拉
       dialog_info_flag: false,
       formLabelWidth: "70px",
       form: {
-        category: [],
+        category: "",
         title: "",
         content: ""
       }
     });
     watch(() => {
-     data.dialog_info_flag = props.flag;
+      data.dialog_info_flag = props.flag;
     });
     const close = () => {
       data.dialog_info_flag = false;
       emit("update:flag", false);
     };
     const opened = () => {
-     data.form.category = props.category;
-    };
-    const dialogConfirm = () => {
-      //调用添加信息
-      AddNews({
-        category: data.default_category,
-        title: data.form.title,
-        content: data.form.content
+      data.categoryOption = props.category;
+      GetNewsList({
+        id: props.edit_id,
+        pageNumber: 1,
+        pageSize: 1
       })
         .then(response => {
-          root.$message({
-            type: response.data.resCode === 0 ? "success" : "error",
-            message: response.data.message
-          });
-          data.dialog_info_flag = false;
-          emit("update:flag", false);
-
+          let result = response.data.data.data[0];
+          data.form.category = result.categoryId;
+          data.form.title = result.title;
+          data.form.content = result.content;
         })
         .catch(error => {});
+    };
+    const dialogConfirm = () => {
+      //调用修改接口
+      EditNewsInfo({
+          id:props.edit_id,
+          categoryId:data.form.category,
+          title:data.form.title,
+          content:data.form.content
+      }).then(response=>{
+         root.$message.success(response.data.message);
+         data.dialog_info_flag =false;
+         //回调父组件的查询方法
+         emit("getNewInfoList");
+
+      }).catch(error=>{
+      });
     };
     return {
       data,

@@ -5,7 +5,8 @@
         <div class="label-wrap category">
           <label for>分类:</label>
           <div class="warp-content">
-            <el-select v-model="data.type_value" placeholder="请选择" style="width:100%;">
+            <el-select v-model="data.type_value" style="width:100%;">
+              <el-option label="请选择" value>请选择</el-option>
               <el-option
                 v-for="item in data.options.category"
                 :key="item.id"
@@ -24,6 +25,8 @@
               v-model="data.date_value"
               style="width:100%"
               type="datetimerange"
+              format="yyyy-MM-dd HH:mm:ss"
+              value-format="yyyy-MM-dd HH:mm:ss"
               align="right"
               start-placeholder="开始日期"
               end-placeholder="结束日期"
@@ -56,7 +59,7 @@
         <div class="label-wrap btn_button">
           <label for></label>
           <div class="warp-content">
-            <el-button type="danger" size="small">查询</el-button>
+            <el-button type="danger" size="small" @click="getNewsList">查询</el-button>
             <el-button type="success" size="small" @click="data.dialog_info=true">新增</el-button>
           </div>
         </div>
@@ -76,7 +79,7 @@
       <el-table-column prop="user" label="管理员" width="150"></el-table-column>
       <el-table-column label="操作" width="250">
         <template slot-scope="scope">
-          <el-button type="success" size="mini" @click="data.dialog_info=true">编辑</el-button>
+          <el-button type="success" size="mini" @click="edit_item(scope.$index,scope.row)">编辑</el-button>
           <el-button @click="delete_item(scope.$index,scope.row)" type="danger" size="mini">删除</el-button>
         </template>
       </el-table-column>
@@ -99,12 +102,20 @@
         ></el-pagination>
       </el-col>
     </el-row>
-    <!--编辑弹窗-->
+    <!--新增弹窗-->
     <DialogInfo :flag.sync="data.dialog_info" :category="data.options.category"></DialogInfo>
+    <!--编辑弹窗-->
+    <DialogEditInfo
+      :flag.sync="data.edit_info"
+      :edit_id="data.row_id"
+      :category="data.options.category"
+      @getNewInfoList="getNewsList"
+    ></DialogEditInfo>
   </div>
 </template>
 <script>
 import DialogInfo from "./dialog/info";
+import DialogEditInfo from "./dialog/eidt";
 import { GetCategory, GetNewsList, DeleteInfo } from "@/api/news";
 import { global } from "@/utils/global";
 import { common } from "@/api/common";
@@ -112,18 +123,20 @@ import { formatDate } from "@/utils/common";
 import { reactive, ref, onMounted, watch } from "@vue/composition-api";
 export default {
   name: "infoIndex",
-  components: { DialogInfo },
+  components: { DialogInfo, DialogEditInfo },
   setup(props, { root, refs }) {
     const { str, confirm } = global();
     const { getInfoCategory } = common();
     //基础数据
     const data = reactive({
       dialog_info: false, //新增按钮弹窗标识
+      edit_info: false, //编辑按钮弹窗标识
       type_value: "", //类型绑定值
       date_value: "", //日期绑定值
       search_key: "id", //关键字下拉框绑定值
       search_keyWords: "", //文本框搜索绑定值
       delete_id: "", //删除数据主键ID
+      row_id: "", //编辑获取数据主键ID
       //下拉框绑定数据
       options: {
         category: [] //类型下拉框
@@ -143,7 +156,7 @@ export default {
       page: {
         //分页
         pageNumber: 1, //页脚
-        pageSize: 10 //页码
+        pageSize: 5 //页码
       }
     });
     //页码
@@ -156,6 +169,7 @@ export default {
       data.page.pageNumber = value;
       getNewsList();
     };
+    //转换列表类型值
     const toCategroy = row => {
       let res = data.options.category.filter(s => s.id == row.categoryId)[0];
       if (res == null) {
@@ -163,26 +177,37 @@ export default {
       }
       return res.category_name;
     };
+    //转换列表日期值
     const toDate = (row, column, cellValue, index) => {
       return formatDate(row.createDate);
     };
-
     //获取信息列表表格数据
     const getNewsList = () => {
-      GetNewsList({
-        categoryId: "",
-        startTiem: "",
-        endTime: "",
-        title: "",
-        id: "",
+      let requestData = {
         pageNumber: data.page.pageNumber,
         pageSize: data.page.pageSize
-      })
+      };
+      if (data.type_value) {
+        requestData.categoryId = data.type_value;
+      }
+      if (data.date_value) {
+        requestData.startTiem = data.date_value[0];
+        requestData.endTime = data.date_value[1];
+      }
+      if (data.search_keyWords) {
+        requestData[data.search_key] = data.search_keyWords;
+      }
+      GetNewsList(requestData)
         .then(response => {
           data.tableData = response.data.data.data;
           data.total = response.data.data.total;
         })
         .catch(error => {});
+    };
+    //编辑
+    const edit_item = (index, row) => {
+      data.edit_info = true;
+      data.row_id = row.id;
     };
     //单行删除
     const delete_item = (index, row) => {
@@ -202,6 +227,7 @@ export default {
       DeleteInfo({ id: data.delete_id })
         .then(response => {
           root.$message.success(response.data.message);
+          data.delete_id = "";
           getNewsList(); //调用获取信息列表接口
         })
         .catch(error => {
@@ -210,7 +236,7 @@ export default {
     };
     //获取选中表格行的ID值
     const handleSelectionChange = value => {
-      data.delete_id= value.map(item => item.id);
+      data.delete_id = value.map(item => item.id);
     };
     //挂载完成生命周期函数
     onMounted(() => {
@@ -233,7 +259,8 @@ export default {
       getNewsList,
       toDate,
       toCategroy,
-      handleSelectionChange
+      handleSelectionChange,
+      edit_item
     };
   }
 };
