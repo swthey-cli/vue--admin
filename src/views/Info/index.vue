@@ -79,6 +79,7 @@
       <el-table-column label="操作" width="250">
         <template slot-scope="scope">
           <el-button type="success" size="mini" @click="edit_item(scope.$index,scope.row)">编辑</el-button>
+          <el-button type="success" size="mini" @click="edit_detail_item(scope.row)">编辑详情</el-button>
           <el-button @click="delete_item(scope.$index,scope.row)" type="danger" size="mini">删除</el-button>
         </template>
       </el-table-column>
@@ -208,6 +209,30 @@ export default {
       data.edit_info = true;
       data.row_id = row.id;
     };
+    //编辑详情
+    const edit_detail_item = row => {
+      // root.$router.push({
+      //   path:`/detailInfo/${row.id}/${row.title}`
+      // })
+      root.$store.commit("infoDetail/UPDATE_STATE_VALUE", {
+        id: {
+          value: row.id,
+          sessionKey: "info_id",
+          session: true
+        },
+        title: {
+          value: row.title,
+          sessionKey: "info_title"
+        }
+      });
+      root.$router.push({
+        name: "DetailInfo",
+        params: {
+          id: row.id,
+          title: row.title
+        }
+      });
+    };
     //单行删除
     const delete_item = (index, row) => {
       data.delete_id = [row.id];
@@ -259,7 +284,8 @@ export default {
       toDate,
       toCategroy,
       handleSelectionChange,
-      edit_item
+      edit_item,
+      edit_detail_item
     };
   }
 };

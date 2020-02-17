@@ -63,6 +63,14 @@ const routes = [
         meta: {
           name: "信息分类"
         }, component: () => import("../views/Info/category.vue")
+      },
+      {
+        path: "/detailInfo",
+        name: "DetailInfo",
+        hidden:true,
+        meta: {
+          name: "信息详情"
+        }, component: () => import("../views/Info/detail.vue")
       }
     ]
   },
