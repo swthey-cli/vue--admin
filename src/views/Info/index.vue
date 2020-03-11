@@ -12,7 +12,7 @@
                 :key="item.id"
                 :label="item.category_name"
                 :value="item.id"
-              >{{item.category_name}}</el-option>
+              >{{ item.category_name }}</el-option>
             </el-select>
           </div>
         </div>
@@ -60,7 +60,7 @@
           <label for></label>
           <div class="warp-content">
             <el-button type="danger" size="small" @click="getNewsList">查询</el-button>
-            <el-button type="success" size="small" @click="data.dialog_info=true">新增</el-button>
+            <el-button type="success" size="small" @click="data.dialog_info = true">新增</el-button>
           </div>
         </div>
       </el-col>
@@ -75,12 +75,17 @@
       <el-table-column type="selection" width="45"></el-table-column>
       <el-table-column prop="title" label="标题"></el-table-column>
       <el-table-column prop="categoryId" label="类型" width="100" :formatter="toCategroy"></el-table-column>
+      <el-table-column prop="imgUrl" label="图片" width="200">
+        <template slot-scope="scope">
+          <img :src="scope.row.imgUrl" min-width="70" height="70" />
+        </template>
+      </el-table-column>
       <el-table-column prop="createDate" label="日期" width="200" :formatter="toDate"></el-table-column>
       <el-table-column label="操作" width="250">
         <template slot-scope="scope">
-          <el-button type="success" size="mini" @click="edit_item(scope.$index,scope.row)">编辑</el-button>
+          <el-button type="success" size="mini" @click="edit_item(scope.$index, scope.row)">编辑</el-button>
           <el-button type="success" size="mini" @click="edit_detail_item(scope.row)">编辑详情</el-button>
-          <el-button @click="delete_item(scope.$index,scope.row)" type="danger" size="mini">删除</el-button>
+          <el-button @click="delete_item(scope.$index, scope.row)" type="danger" size="mini">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -124,7 +129,7 @@ import { reactive, ref, onMounted, watch } from "@vue/composition-api";
 export default {
   name: "infoIndex",
   components: { DialogInfo, DialogEditInfo },
-  setup(props, { root, refs }) {
+  setup (props, { root, refs }) {
     const { str, confirm } = global();
     const { getInfoCategory } = common();
     //基础数据
@@ -178,7 +183,7 @@ export default {
       return res.category_name;
     };
     //转换列表日期值
-    const toDate = (row, column, cellValue, index) => {
+    const toDate = row => {
       return formatDate(row.createDate);
     };
     //获取信息列表表格数据
@@ -202,7 +207,7 @@ export default {
           data.tableData = response.data.data.data;
           data.total = response.data.data.total;
         })
-        .catch(error => {});
+        .catch();
     };
     //编辑
     const edit_item = (index, row) => {
@@ -270,7 +275,7 @@ export default {
         .then(response => {
           data.options.category = response.data.data.data;
         })
-        .catch(error => {});
+        .catch();
       //调用获取信息列表接口
       getNewsList();
     });

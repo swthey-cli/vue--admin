@@ -7,14 +7,14 @@
           :key="item.id"
           :label="item.category_name"
           :value="item.id"
-        >{{item.category_name}}</el-option>
+        >{{ item.category_name }}</el-option>
       </el-select>
     </el-form-item>
     <el-form-item label="新闻标题:">
       <el-input v-model="form.title"></el-input>
     </el-form-item>
     <el-form-item label="缩略图:">
-      <el-input v-model="form.imgUrl"></el-input>
+      <uploadImg :imgurl.sync="form.imgUrl"></uploadImg>
     </el-form-item>
     <el-form-item label="发布日期:">
       <el-date-picker
@@ -29,15 +29,16 @@
       <quillEditor v-model="form.content" ref="myQuilEditor" :options="data.editorOption"></quillEditor>
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="submit">立即创建</el-button>
-      <el-button>取消</el-button>
+      <el-button type="primary" @click="submit">提交</el-button>
+      <el-button @click="back">取消</el-button>
     </el-form-item>
   </el-form>
 </template>
 <script>
-import { reactive, ref, onMounted } from "@vue/composition-api";
+import { reactive, onMounted } from "@vue/composition-api";
+import uploadImg from "@/components/uploadImg";
 import { formatDate } from "@/utils/common";
-import { EditNewsInfo,GetNewsList } from "@/api/news";
+import { EditNewsInfo, GetNewsList } from "@/api/news";
 //富文本编辑器
 import { quillEditor } from "vue-quill-editor";
 import "quill/dist/quill.core.css";
@@ -45,8 +46,8 @@ import "quill/dist/quill.snow.css";
 import "quill/dist/quill.bubble.css";
 export default {
   name: "detailInfo",
-  components: { quillEditor },
-  setup(props, { root }) {
+  components: { quillEditor, uploadImg },
+  setup (props, { root }) {
     const data = reactive({
       id: root.$route.params.id || root.$store.getters["infoDetail/info_id"],
       category: [], //分类下拉
@@ -60,15 +61,18 @@ export default {
       imgUrl: "",
       content: ""
     });
-    onMounted(() => {
+    //获取分类下拉框
+    const getInfoselector = () => {
       //调用获取分类赋值给下拉框
       root.$store
         .dispatch("common/getInfoCategory")
         .then(response => {
           data.category = response.data.data.data;
         })
-        .catch(error => {});
-      //获取当前行数据
+        .catch();
+    };
+    //获取当前行数据
+    const getInfo = () => {
       GetNewsList({
         id: data.id,
         pageNumber: 1,
@@ -80,33 +84,42 @@ export default {
           form.category = result.categoryId;
           form.createDate = formatDate(result.createDate);
           form.content = result.content;
+          form.imgUrl = result.imgUrl;
         })
-        .catch(error => {});
+        .catch();
+    };
+
+    onMounted(() => {
+      getInfoselector();
+      getInfo();
     });
     //提交
-    const submit=()=>{
-       //调用修改接口
+    const submit = () => {
+      //调用修改接口
       EditNewsInfo({
-          id:data.id,
-          categoryId:form.category,
-          title:form.title,
-          content:form.content,
-          imgUrl:form.imgUrl
-      }).then(response=>{
-         root.$message.success(response.data.message);
-      }).catch(error=>{
-      });
-    }
-
-
+        id: data.id,
+        categoryId: form.category,
+        title: form.title,
+        content: form.content,
+        imgUrl: form.imgUrl
+      })
+        .then(response => {
+          root.$message.success(response.data.message);
+        })
+        .catch();
+    };
+    const back = () => {
+      root.$router.go(-1);
+    };
     return {
       form,
       data,
-      submit
+      getInfo,
+      submit,
+      back,
+      getInfoselector
     };
   }
 };
 </script>
-<style lang="sass" scoped>
-
-</style>
+<style lang="scss" scoped></style>
