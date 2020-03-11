@@ -5,7 +5,7 @@ import app from "./modules/app.js";
 import common from "./modules/common";
 import infoDetail from "./modules/infoDetail";
 export default new Vuex.Store({
-  modules:{
+  modules: {
     app,
     common,
     infoDetail
