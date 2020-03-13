@@ -39,14 +39,7 @@
         <div class="label-wrap key-words">
           <label for>{{"关键字："&nbsp;&nbsp;&nbsp;}}</label>
           <div class="warp-content">
-            <el-select v-model="data.search_key" placeholder="请选择" style="width:100%">
-              <el-option
-                v-for="item in data.searchOption"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              ></el-option>
-            </el-select>
+            <selectVue :config="data.configSelect"></selectVue>
           </div>
         </div>
       </el-col>
@@ -122,13 +115,14 @@
 import DialogInfo from "./dialog/info";
 import DialogEditInfo from "./dialog/eidt";
 import { GetCategory, GetNewsList, DeleteInfo } from "@/api/news";
+import selectVue from "@/components/Select";
 import { global } from "@/utils/global";
 import { common } from "@/api/common";
 import { formatDate } from "@/utils/common";
 import { reactive, ref, onMounted, watch } from "@vue/composition-api";
 export default {
   name: "infoIndex",
-  components: { DialogInfo, DialogEditInfo },
+  components: { DialogInfo, DialogEditInfo, selectVue },
   setup (props, { root, refs }) {
     const { str, confirm } = global();
     const { getInfoCategory } = common();
@@ -146,16 +140,7 @@ export default {
       options: {
         category: [] //类型下拉框
       },
-      searchOption: [
-        {
-          value: "id",
-          label: "ID"
-        },
-        {
-          value: "title",
-          label: "标题"
-        }
-      ], //关键字下拉框数据
+      configSelect: ["id", "title"],
       tableData: [], //表格数据
       total: 0, //总记录数
       page: {

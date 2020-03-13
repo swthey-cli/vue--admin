@@ -36,7 +36,7 @@
 </template>
 <script>
 import { reactive, onMounted } from "@vue/composition-api";
-import uploadImg from "@/components/uploadImg";
+import uploadImg from "@/components/UploadImg";
 import { formatDate } from "@/utils/common";
 import { EditNewsInfo, GetNewsList } from "@/api/news";
 //富文本编辑器

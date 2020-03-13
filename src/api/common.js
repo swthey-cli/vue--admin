@@ -39,3 +39,11 @@ export function QiniuToken (data) {
     data: data
   });
 }
+
+export function LoadTableData (params) {
+  return service.request({
+    method: params.method || "post",
+    url: params.url,
+    data: params.data || {}
+  });
+}
