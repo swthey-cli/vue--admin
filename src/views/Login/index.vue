@@ -1,5 +1,22 @@
 <template>
   <div id="login">
+    <vue-particles
+      color="#dedede"
+      :particleOpacity="0.7"
+      :particlesNumber="80"
+      shapeType="circle"
+      :particleSize="4"
+      linesColor="#dedede"
+      :linesWidth="1"
+      :lineLinked="true"
+      :lineOpacity="0.4"
+      :linesDistance="150"
+      :moveSpeed="3"
+      :hoverEffect="true"
+      hoverMode="grab"
+      :clickEffect="true"
+      clickMode="push"
+    ></vue-particles>
     <div class="login-wrap">
       <ul class="menu-tab">
         <li
@@ -86,7 +103,7 @@ import {
 } from "@/utils/validate.js";
 export default {
   name: "login",
-  setup(props, context) {
+  setup (props, context) {
     //验证用户名
     let validateUsername = (rule, value, callback) => {
       if (value === "") {
@@ -212,16 +229,16 @@ export default {
         if (valid) {
           model.value == "login"
             ? login({
-                username: ruleForm.username,
-                password: ruleForm.password,
-                code: ruleForm.code
-              })
+              username: ruleForm.username,
+              password: ruleForm.password,
+              code: ruleForm.code
+            })
             : Register({
-                username: ruleForm.username,
-                password: ruleForm.password,
-                code: ruleForm.code,
-                module: model.value
-              });
+              username: ruleForm.username,
+              password: ruleForm.password,
+              code: ruleForm.code,
+              module: model.value
+            });
         } else {
           console.log("error submit!!");
           return false;
@@ -232,17 +249,17 @@ export default {
 
     const login = data => {
       context.root.$store
-        .dispatch("app/Login",data)
+        .dispatch("app/Login", data)
         .then(response => {
           context.root.$message.success(response.data.message);
-          
+
           clearDown();
           //页面跳转
           context.root.$router.push({
             name: "Console"
           });
         })
-        .catch(error => {});
+        .catch(error => { });
     };
     //注册
     const register = data => {
@@ -285,7 +302,7 @@ export default {
       clearInterval(timer.value); //清除倒计时
     };
     //挂载完成
-    onMounted(() => {});
+    onMounted(() => { });
     //返回所有数据
     return {
       menuTab,
@@ -303,12 +320,25 @@ export default {
 </script>
 <style lang="scss" scoped>
 #login {
+  width: 100vw;
   height: 100vh;
-  background-color: #344a5f;
+  position: relative;
+}
+#login > #particles-js {
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 .login-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 330px;
-  margin: auto;
+  height: 480px;
+  transform: translate(-165px, -240px);
 }
 .menu-tab {
   text-align: center;
