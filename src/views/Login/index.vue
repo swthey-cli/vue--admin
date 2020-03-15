@@ -20,7 +20,7 @@
     <div class="login-wrap">
       <ul class="menu-tab">
         <li
-          v-for="item in menuTab"
+          v-for="item in data.menuTab"
           :key="item.id"
           :class="{'current':item.current}"
           @click="toggleMenu(item)"
@@ -28,34 +28,34 @@
       </ul>
       <!--表单 start-->
       <el-form
-        :model="ruleForm"
+        :model="data.ruleForm"
         status-icon
-        :rules="rules"
+        :rules="data.rules"
         ref="ruleForm"
         class="login-form"
         size="medium"
       >
         <el-form-item prop="username" class="item-form">
           <label>邮箱</label>
-          <el-input type="text" v-model="ruleForm.username" autocomplete="off"></el-input>
+          <el-input type="text" v-model="data.ruleForm.username" autocomplete="off"></el-input>
         </el-form-item>
 
         <el-form-item prop="password" class="item-form">
           <label>密码</label>
           <el-input
             type="password"
-            v-model="ruleForm.password"
+            v-model="data.ruleForm.password"
             autocomplete="off"
             minlength="6"
             maxlength="10"
           ></el-input>
         </el-form-item>
 
-        <el-form-item prop="passwords" class="item-form" v-show="model==='regsiter'">
+        <el-form-item prop="passwords" class="item-form" v-show="data.model==='regsiter'">
           <label>重复密码</label>
           <el-input
             type="password"
-            v-model="ruleForm.passwords"
+            v-model="data.ruleForm.passwords"
             autocomplete="off"
             minlength="6"
             maxlength="10"
@@ -66,26 +66,26 @@
           <label>验证码</label>
           <el-row :gutter="10 ">
             <el-col :span="15">
-              <el-input v-model="ruleForm.code" minlength="6" maxlength="6"></el-input>
+              <el-input v-model="data.ruleForm.code" minlength="6" maxlength="6"></el-input>
             </el-col>
             <el-col :span="9">
               <el-button
                 class="block"
                 type="success"
                 @click="getSms()"
-                :disabled="codeButtonStatus.status"
-              >{{codeButtonStatus.text}}</el-button>
+                :disabled="data.codeButtonStatus.status"
+              >{{data.codeButtonStatus.text}}</el-button>
             </el-col>
           </el-row>
         </el-form-item>
 
         <el-form-item>
           <el-button
-            :disabled="loginbtnStatus"
+            :disabled="data.loginbtnStatus"
             class="login-btn block"
             type="danger"
             @click="submitForm('ruleForm')"
-          >{{model==="login"?"登录":"注册"}}</el-button>
+          >{{data.model==="login"?"登录":"注册"}}</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -104,6 +104,28 @@ import {
 export default {
   name: "login",
   setup (props, context) {
+    const data = reactive({
+      menuTab: [
+        { txt: "登录", current: true, type: "login" },
+        { txt: "注册", current: false, type: "regsiter" }
+      ],
+      codeButtonStatus: { status: false, text: "获取验证码" },
+      model: "login",
+      timer: null,
+      loginbtnStatus: true,
+      ruleForm: {
+        username: "",
+        password: "",
+        passwords: "",
+        code: ""
+      },
+      rules: {
+        username: [{ validator: validateUsername, trigger: "blur" }],
+        password: [{ validator: validatePassword, trigger: "blur" }],
+        passwords: [{ validator: validatePasswords, trigger: "blur" }],
+        code: [{ validator: validateCode, trigger: "blur" }]
+      }
+    })
     //验证用户名
     let validateUsername = (rule, value, callback) => {
       if (value === "") {
@@ -116,8 +138,8 @@ export default {
     };
     //验证密码
     let validatePassword = (rule, value, callback) => {
-      ruleForm.password = stripscript(value);
-      value = ruleForm.password;
+      data.ruleForm.password = stripscript(value);
+      value = data.ruleForm.password;
       if (value === "") {
         callback(new Error("请输入密码"));
       } else if (!VaildatePass(value)) {
@@ -128,15 +150,15 @@ export default {
     };
     //验证确认密码
     let validatePasswords = (rule, value, callback) => {
-      if (model.value === "login") {
+      if (data.model === "login") {
         callback();
       }
       //过滤后的密码
-      ruleForm.passwords = stripscript(value);
-      value = ruleForm.passwords;
+      data.ruleForm.passwords = stripscript(value);
+      value = data.ruleForm.passwords;
       if (value === "") {
         callback(new Error("请再次输入密码"));
-      } else if (value != ruleForm.password) {
+      } else if (value != data.ruleForm.password) {
         callback(new Error("两次输入密码不一致"));
       } else {
         callback();
@@ -152,51 +174,30 @@ export default {
         callback();
       }
     };
-    //这里面放置data数据，生命周期，自定义函数
-    const menuTab = reactive([
-      { txt: "登录", current: true, type: "login" },
-      { txt: "注册", current: false, type: "regsiter" }
-    ]);
-    //验证码状态数据
-    const codeButtonStatus = reactive({ status: false, text: "获取验证码" });
-    const model = ref("login");
-    const timer = ref(null); //倒计时
-    const loginbtnStatus = ref(true);
-    const ruleForm = reactive({
-      username: "",
-      password: "",
-      passwords: "",
-      code: ""
-    });
-    const rules = reactive({
-      username: [{ validator: validateUsername, trigger: "blur" }],
-      password: [{ validator: validatePassword, trigger: "blur" }],
-      passwords: [{ validator: validatePasswords, trigger: "blur" }],
-      code: [{ validator: validateCode, trigger: "blur" }]
-    });
-    const toggleMenu = data => {
-      menuTab.forEach(s => {
+    //切换登录选项
+    const toggleMenu = item => {
+      data.menuTab.forEach(s => {
         s.current = false;
       });
       data.current = true;
-      model.value = data.type;
+      data.model = item.type;
       context.refs.ruleForm.resetFields(); //切换登录注册按钮重置表单
-      codeButtonStatus.status = false;
-      codeButtonStatus.text = "获取验证码";
-      loginbtnStatus.value = true;
+      data.codeButtonStatus.status = false;
+      data.codeButtonStatus.text = "获取验证码";
+      data.loginbtnStatus = true;
     };
     //更新验证码按钮状态
     const updateButtonStatus = prams => {
-      codeButtonStatus.status = prams.status;
-      codeButtonStatus.text = prams.text;
+      data.codeButtonStatus.status = prams.status;
+      data.codeButtonStatus.text = prams.text;
     };
     //点击验证码按钮事件
     const getSms = () => {
-      if (ruleForm.username == "") {
+      if (data.ruleForm.username == "") {
         context.root.$message.error("邮箱不能为空");
         return false;
       }
-      if (!ValidateEmail(ruleForm.username)) {
+      if (!ValidateEmail(data.ruleForm.username)) {
         context.root.$message.error("邮箱格式错误");
       }
       //修改获取验证码按钮状态
@@ -206,14 +207,14 @@ export default {
       });
       //调用获取验证码接口
       GetSms({
-        username: ruleForm.username,
-        module: model.value
+        username: data.ruleForm.username,
+        module: data.model
       })
         .then(response => {
-          let data = response.data;
-          context.root.$message.success(data.message);
+          let result = response.data;
+          context.root.$message.success(result.message);
           //启用登录或注册按钮
-          loginbtnStatus.value = false;
+          data.loginbtnStatus = false;
           //调定时器，验证码按钮倒计时
           countDown(60);
         })
@@ -222,22 +223,21 @@ export default {
           clearDown();
         });
     };
-
     //提交表单
     const submitForm = formName => {
       context.refs[formName].validate(valid => {
         if (valid) {
-          model.value == "login"
+          data.model == "login"
             ? login({
-              username: ruleForm.username,
-              password: ruleForm.password,
-              code: ruleForm.code
+              username: data.ruleForm.username,
+              password: data.ruleForm.password,
+              code: data.ruleForm.code
             })
             : Register({
-              username: ruleForm.username,
-              password: ruleForm.password,
-              code: ruleForm.code,
-              module: model.value
+              username: data.ruleForm.username,
+              password: data.ruleForm.password,
+              code: data.ruleForm.code,
+              module: data.model
             });
         } else {
           console.log("error submit!!");
@@ -246,13 +246,11 @@ export default {
       });
     };
     //登录
-
     const login = data => {
       context.root.$store
         .dispatch("app/Login", data)
         .then(response => {
           context.root.$message.success(response.data.message);
-
           clearDown();
           //页面跳转
           context.root.$router.push({
@@ -276,20 +274,20 @@ export default {
     //倒计时
     const countDown = number => {
       //防止多次触发
-      if (timer.value) {
-        clearInterval(timer.value);
+      if (data.timer) {
+        clearInterval(data.timer);
       }
       let time = number;
-      timer.value = setInterval(() => {
+      data.timer = setInterval(() => {
         time--;
         if (time === 0) {
-          clearInterval(timer.value); //清除定时器
+          clearInterval(data.timer); //清除定时器
           updateButtonStatus({
             status: false,
             text: "再次获取"
           });
         } else {
-          codeButtonStatus.text = `倒计时${time}秒`;
+          data.codeButtonStatus.text = `倒计时${time}秒`;
         }
       }, 1000);
     };
@@ -299,18 +297,11 @@ export default {
         status: false,
         text: "获取验证码"
       });
-      clearInterval(timer.value); //清除倒计时
+      clearInterval(data.timer); //清除倒计时
     };
-    //挂载完成
-    onMounted(() => { });
     //返回所有数据
     return {
-      menuTab,
-      model,
-      loginbtnStatus,
-      codeButtonStatus,
-      rules,
-      ruleForm,
+      data,
       getSms,
       toggleMenu,
       submitForm
