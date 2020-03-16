@@ -20,7 +20,7 @@
         </div>
       </el-col>
       <el-col :span="4">
-        <el-button type="danger" class="pull-right">新增用户</el-button>
+        <el-button type="danger" class="pull-right" @click="data.dialogUser=true">新增用户</el-button>
       </el-col>
     </el-row>
     <div class="black-space-30"></div>
@@ -33,17 +33,21 @@
         <el-button size="small" type="danger" @click="deleteUser(slotData.data)">删除</el-button>
       </template>
     </tableVue>
+    <!--新增弹窗-->
+    <addUser :flag.sync="data.dialogUser"></addUser>
   </div>
 </template>
 <script>
 import { reactive } from "@vue/composition-api";
+import addUser from "./dialog/addUser";
 import selectVue from "@/components/Select";
 import tableVue from "@/components/Table";
 export default {
   name: "userList",
-  components: { selectVue, tableVue },
+  components: { selectVue, tableVue, addUser },
   setup (props, { root }) {
     const data = reactive({
+      dialogUser: false,
       configSelect: ["name", "phone", "email"],
       configTable: {
         selection: false,

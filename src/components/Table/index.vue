@@ -13,7 +13,13 @@
             <slot :name="item.slotName" :data="scope.row"></slot>
           </template>
         </el-table-column>
-        <el-table-column :key="item.field" :prop="item.field" :label="item.label" v-else></el-table-column>
+        <el-table-column
+          :key="item.field"
+          :prop="item.field"
+          :formatter="item.formatter"
+          :label="item.label"
+          v-else
+        ></el-table-column>
       </template>
     </el-table>
     <el-pagination
@@ -69,7 +75,6 @@ export default {
         tableLoad(data.tableConfig.requestData);
       }
     })
-
     //表格列动态加载
     const initTableConfig = () => {
       let configData = props.config;

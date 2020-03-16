@@ -58,48 +58,16 @@
         </div>
       </el-col>
     </el-row>
-    <!--表格数据-->
-    <el-table
-      :data="data.tableData"
-      border
-      @selection-change="handleSelectionChange"
-      style="width: 100%"
-    >
-      <el-table-column type="selection" width="45"></el-table-column>
-      <el-table-column prop="title" label="标题"></el-table-column>
-      <el-table-column prop="categoryId" label="类型" width="100" :formatter="toCategroy"></el-table-column>
-      <el-table-column prop="imgUrl" label="图片" width="200">
-        <template slot-scope="scope">
-          <img :src="scope.row.imgUrl" min-width="70" height="70" />
-        </template>
-      </el-table-column>
-      <el-table-column prop="createDate" label="日期" width="200" :formatter="toDate"></el-table-column>
-      <el-table-column label="操作" width="250">
-        <template slot-scope="scope">
-          <el-button type="success" size="mini" @click="edit_item(scope.$index, scope.row)">编辑</el-button>
-          <el-button type="success" size="mini" @click="edit_detail_item(scope.row)">编辑详情</el-button>
-          <el-button @click="delete_item(scope.$index, scope.row)" type="danger" size="mini">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <!--底部分页-->
-    <el-row>
-      <el-col :span="10">
-        <el-button size="medium" @click="deleteAll">批量删除</el-button>
-      </el-col>
-      <el-col :span="14">
-        <el-pagination
-          class="pull-right"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          :current-page="1"
-          :page-sizes="[5, 10, 20, 50]"
-          :page-size="5"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="data.total"
-        ></el-pagination>
-      </el-col>
-    </el-row>
+    <tableVue :config="data.configTable">
+      <template v-slot:imgUrl="slotData">
+        <img :src="slotData.data.imgUrl" min-width="70" height="70" />
+      </template>
+      <template v-slot:operation="slotData">
+        <el-button type="success" size="mini" @click="edit_item(slotData.$index, slotData.data)">编辑</el-button>
+        <el-button type="success" size="mini" @click="edit_detail_item(slotData.data)">编辑详情</el-button>
+        <el-button @click="delete_item(slotData.$index, slotData.data)" type="danger" size="mini">删除</el-button>
+      </template>
+    </tableVue>
     <!--新增弹窗-->
     <DialogInfo :flag.sync="data.dialog_info" :category="data.options.category"></DialogInfo>
     <!--编辑弹窗-->
@@ -114,6 +82,7 @@
 <script>
 import DialogInfo from "./dialog/info";
 import DialogEditInfo from "./dialog/eidt";
+import tableVue from "@/components/Table";
 import { GetCategory, GetNewsList, DeleteInfo } from "@/api/news";
 import selectVue from "@/components/Select";
 import { global } from "@/utils/global";
@@ -122,12 +91,48 @@ import { formatDate } from "@/utils/common";
 import { reactive, ref, onMounted, watch } from "@vue/composition-api";
 export default {
   name: "infoIndex",
-  components: { DialogInfo, DialogEditInfo, selectVue },
+  components: { DialogInfo, DialogEditInfo, selectVue, tableVue },
   setup (props, { root, refs }) {
     const { str, confirm } = global();
     const { getInfoCategory } = common();
     //基础数据
     const data = reactive({
+      configTable: {
+        selection: false,
+        requestData: {
+          url: "getNewList",
+          method: "post",
+          data: {
+            categoryId: "",
+            startTiem: "",
+            endTime: "",
+            title: "",
+            id: "",
+            pageNumber: 1,
+            pageSize: 10
+          }
+        },
+        tHead: [
+          { label: "标题", field: "title" },
+          {
+            label: "类型",
+            field: "categoryId",
+            formatter: (row) => {
+              return toCategroy(row);
+            }
+          },
+          { label: "图片", field: "imgUrl", columnType: "slot", slotName: "imgUrl" },
+          {
+            label: "日期",
+            field: "createDate",
+            formatter: (row) => {
+              return toDate(row);
+            }
+          },
+          { label: "操作", columnType: "slot", slotName: "operation" }
+        ],
+        pageination: true
+      },
       dialog_info: false, //新增按钮弹窗标识
       edit_info: false, //编辑按钮弹窗标识
       type_value: "", //类型绑定值
@@ -149,16 +154,6 @@ export default {
         pageSize: 5 //页码
       }
     });
-    //页码
-    const handleSizeChange = value => {
-      data.page.pageSize = value;
-      getNewsList();
-    };
-    //页脚
-    const handleCurrentChange = value => {
-      data.page.pageNumber = value;
-      getNewsList();
-    };
     //转换列表类型值
     const toCategroy = row => {
       let res = data.options.category.filter(s => s.id == row.categoryId)[0];
@@ -266,8 +261,6 @@ export default {
     });
     return {
       data,
-      handleSizeChange,
-      handleCurrentChange,
       delete_item,
       deleteAll,
       getNewsList,
