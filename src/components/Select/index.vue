@@ -1,5 +1,5 @@
 <template>
-  <el-select v-model="data.selectedValue">
+  <el-select v-model="data.selectedValue" @change="selectChange">
     <el-option
       v-for="item in data.optionsArrs"
       :key="item.value"
@@ -16,33 +16,44 @@ export default {
     config: {
       type: Array,
       default: []
+    },
+    selectData: {
+      type: Object,
+      default: () => { }
     }
   },
-  setup (props, { root }) {
+  setup (props, { root, emit }) {
     const data = reactive({
       optionsArrs: [],
       selectedValue: "",
       options: [
-        { vlaue: "name", label: "姓名" },
-        { vlaue: "phone", label: "手机号" },
-        { vlaue: "email", label: "邮箱" },
-        { vlaue: "id", label: "ID" },
-        { vlaue: "title", label: "标题" }
+        { value: "name", label: "姓名" },
+        { value: "phone", label: "手机号" },
+        { value: "email", label: "邮箱" },
+        { value: "id", label: "ID" },
+        { value: "title", label: "标题" }
       ]
     });
     const initSelectValue = () => {
-
+      let optionArr = [];
       props.config.forEach(element => {
-        let arr = data.options.filter(x => x.vlaue == element)[0];
-        data.optionsArrs.push(arr);
+        let arr = data.options.filter(x => x.value == element)[0];
+        optionArr.push(arr);
       });
-      data.selectedValue = data.optionsArrs[0].label;
+      console.log(data.optionsArrs);
+      data.selectedValue = optionArr[0].label;
+      data.optionsArrs = optionArr;
+    }
+    const selectChange = (val) => {
+      let selectData = data.optionsArrs.filter(s => s.value == val)[0];
+      emit("update:selectData", selectData);
     }
     onMounted(() => {
       initSelectValue();
     })
     return {
-      data
+      data,
+      selectChange
     }
   }
 }

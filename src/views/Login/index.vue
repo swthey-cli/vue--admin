@@ -104,6 +104,7 @@ import {
 export default {
   name: "login",
   setup (props, context) {
+
     const data = reactive({
       menuTab: [
         { txt: "登录", current: true, type: "login" },

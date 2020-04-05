@@ -1,6 +1,11 @@
 <template>
   <div>
-    <el-table :data="data.tableData" border style="width: 100%">
+    <el-table
+      :data="data.tableData"
+      border
+      style="width: 100%"
+      @selection-change="handleSelectionChange"
+    >
       <el-table-column type="selection" width="50" v-if="data.tableConfig.selection"></el-table-column>
       <template v-for="item in data.tableConfig.tHead">
         <el-table-column
@@ -14,7 +19,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          :key="item.field"
+          :key="item.field" 
           :prop="item.field"
           :formatter="item.formatter"
           :label="item.label"
@@ -22,17 +27,29 @@
         ></el-table-column>
       </template>
     </el-table>
-    <el-pagination
-      v-if="data.tableConfig.pageination"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-      :current-page="pageData.currentPage"
-      :page-sizes="pageData.pageSizes"
-      :page-size="pageData.pageSize"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="pageData.total"
-      background
-    ></el-pagination>
+    <div>
+      <el-row>
+        <el-col :span="4">
+          <template>
+            <slot name="deleteAll"></slot>
+          </template>
+        </el-col>
+        <el-col :span="20">
+          <el-pagination
+            class="pull-right"
+            v-if="data.tableConfig.pageination"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="pageData.currentPage"
+            :page-sizes="pageData.pageSizes"
+            :page-size="pageData.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="pageData.total"
+            background
+          ></el-pagination>
+        </el-col>
+      </el-row>
+    </div>
   </div>
 </template>
 <script>
@@ -46,9 +63,13 @@ export default {
     config: {
       type: Object,
       default: () => { }
+    },
+    tableRow: {
+      type: Object,
+      default: () => { }
     }
   },
-  setup (props, { root }) {
+  setup (props, { root, emit }) {
     const { loadData, tableLoad } = LodaData();
     const { pageData, handleSizeChange, handleCurrentChange, pageTotalCount } = Pageination();
     const data = reactive({
@@ -75,6 +96,25 @@ export default {
         tableLoad(data.tableConfig.requestData);
       }
     })
+    const handleSelectionChange = (val) => {
+      let rowData = {
+        idItem: val.map(item => item.id)
+      }
+      emit("update:tableRow", rowData);
+    }
+    const refresData = () => {
+      tableLoad(data.tableConfig.requestData);
+    }
+    const paramsLoadData = (params) => {
+      let paramsData = Object.assign({}, params, {
+        pageNumber: 1,
+        pageSize: 10
+      });
+      data.tableConfig.requestData.data = paramsData;
+      console.log(data.tableConfig.requestData);
+      tableLoad(data.tableConfig.requestData);
+    }
+
     //表格列动态加载
     const initTableConfig = () => {
       let configData = props.config;
@@ -91,7 +131,8 @@ export default {
     })
     return {
       data,
-      pageData, handleSizeChange, handleCurrentChange
+      pageData, handleSizeChange, handleCurrentChange,
+      handleSelectionChange, refresData, paramsLoadData
     }
   }
 }

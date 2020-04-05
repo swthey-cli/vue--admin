@@ -20,12 +20,8 @@ export function LodaData () {
     }
     LoadTableData(requestData).then(response => {
       let responseData = response.data.data.data;
-      if (responseData && responseData.length > 0) {
-        loadData.item = responseData;
-        loadData.total = response.data.data.total;
-      }
-
-
+      loadData.item = responseData;
+      loadData.total = responseData.length === 0 ? 0 : response.data.data.total;
     }).catch();
   };
   return {
